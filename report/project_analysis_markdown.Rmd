@@ -1,0 +1,313 @@
+---
+title: "BIOINF 545 Final Project"
+author: "Joshua Galla"
+date: "2024-04-15"
+output:
+  html_document:
+    df_print: paged
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Project Overview:
+
+The aim of this project is to perform an scRNA-seq analysis to immunophenotype the tumor microenvironment (TME) across the following breast cancer subtypes: human epidermal growth factor receptor 2 positive (HER2+), estrogen receptor positive (ER+), and triple-negative breast cancer (TNBC). The motivation for this project is to 1) mimic the work performed by Ido Nofech-Mozes et al. ([described here](https://www.nature.com/articles/s41467-023-37353-8)) to a new dataset in order to replicate these findings, 2) identify and classify prevalent biomarkers in each of the three separate breast cancer subtypes, and 3) categorize subtype-specific immune cell populations as clusters in order to identify spatial relationships and prevalent immune cell groupings within the dynamic TME.
+
+In summary, Ido Nofech-Mozes et al. developed a new model for classifying cell types in the tumor microenvironment across cancer types called scATOMIC, which improves cellular classification and analysis of the TME setting. Previously, cell-type classifications within the TME have been difficult due to high heterogeneity among the same tissue type and low transcriptomic variation among specialized immune cells. scATOMIC aims to bridge this knowledge gap and its pipeline has been specifically extended/built upon for breast cancer classification. This paper served as the primary motivation for my project outline below.
+
+# Dataset:
+
+The dataset I use in this project was obtained from the NCBI's Gene Expression Omnibus (GEO; [Data](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE176078)) as a zipped TAR file titled "GSE176078_Wu_etal_2021_BRCA_scRNASeq.tar.gz". This zipped file contains the metadata, raw counts, genes, barcode, and matrix info/data for the 26 primary tumor samples in this dataset. These 26 samples are split into 11 ER+, 5 HER2+, and 10 TNBC samples that have already undergone preprocessing QC such as adapter trimming. 
+
+I will be adapting this dataset and continuing downstream analysis with guidance from R's [Seurat Object Tutorial](https://satijalab.org/seurat/articles/pbmc3k_tutorial) and performing normalization, highly variable feature selection, linear dimensionality reduction (PCA), clustering and non-linear dimensionality reduction, differential gene expression analysis, and general visualization.
+
+_Note:_ Due to vector memory limits being reached when running the following analysis on local, the below lines of code will not be run. However, all resulting plots/figures will be displayed below each respective code section.
+
+# Packages:
+
+```{r packages, echo=TRUE, message=FALSE, warning=FALSE}
+
+#packages
+library(tidyverse)
+library(dplyr)
+library(Seurat)
+library(patchwork)
+library(glue)
+
+```
+
+# Step 1: Load Data:
+
+The dataset used in this analysis (link in "Dataset" section above) is loaded in using the Read10X function, returning a sparse matrix representing gene expression per cell per respective patient. Every column of the sparse matrix represents a cell specific to a certain patient ID (ex: CID3586) and each row represents the RNA molecule count given a specific gene/feature.
+
+Loading in the metadata will provide us with a number of important details including subtype, percent mitochondrial DNA, nFeature_RNA (the number of unique genes expressed per cell), and nCount_RNA (total number of RNA molecules per cell). A higher number of nFeature_RNA and nCount_RNA counts indicate more diverse cellular expression and more RNA content/more sequencing depth, respectively.
+
+I then create a Seurat Object for the sparse/count matrix from the data above. I set a minimum threshold of cells at 3 to filter out noise and non-biologically relevant signal, and features at 200 to avoid low-quality cells and make sure that cells carried through downstream analysis have sufficiently enough gene expression info.
+
+
+```{r load data, echo = TRUE, message=TRUE, warning=FALSE, results='hide', eval = FALSE}
+
+#produces a sparse matrix indicating gene expression per cell per patient
+data <- Read10X("./GSE176078_Wu_etal_2021_BRCA_scRNASeq", gene.column = 1) #takes a couple mins
+
+#reading in metadata
+metadata <- read.csv("./GSE176078_Wu_etal_2021_BRCA_scRNASeq/metadata.csv")
+#head(metadata)
+
+#creating Seurat Object
+data <- CreateSeuratObject(data, project = "545_group_project", min.cells = 3, 
+min.features = 200) #takes a couple mins
+
+```
+
+# Step 3: QC and Subsetting:
+
+Low-quality data is filtered out by setting a minimum and maximum threshold for the number of unique genes/features expressed per cell, a minimum number of total RNA molecules per cell, and a maximum percent mitochondrial DNA mapping. These metrics are implemented to further ensure that low quality reads are removed, cells with sufficient RNA and genetic information are carried into downstream analysis, and to avoid samples that have high cellular contamination from cell death as represented by a mitochondrial DNA mapping percent of 10-15% or higher.
+
+The data is then subset by their respective breast cancer subtypes HER2+, ER+, and TNBC. As noted in the project overview" section, the following code can be run with sufficient memory space for vector calculations. Figures and results are displayed after each resulting section's respective block of code.
+
+
+```{r qc and subsetting, echo = TRUE, message = TRUE, warning = FALSE, results='hide', eval = FALSE}
+
+#set QC thresholds to filter out low quality reads - can be adjusted as needed
+nfeature_min <- 200
+nfeature_max <- 2500
+ncount_min <- 500
+percent_mt_max <- 10
+
+#Adding "percent.mt" column from metadata to data object
+data[["percent.mt"]] <- PercentageFeatureSet(data, pattern = "^MT-")
+
+#add subset data type column from metadata to data
+data$subtype <- metadata$subtype
+
+#subset data based on QC counts (features/counts/percent.mt)
+data <- subset(data, subset = nFeature_RNA > nfeature_min & nFeature_RNA < nfeature_max & 
+nCount_RNA > ncount_min & percent.mt < percent_mt_max)
+
+#subset data based on subtype
+subtype <- "HER2+" #options include "HER2+", "ER+", or "TNBC"
+data <- subset(data, subset = subtype == subtype)
+#print(length(data$nCount_RNA)) #total number of cells in HER2+ subset
+
+```
+
+# Step 4: Normalization by CPM:
+
+Next I normalize the data using Counts per Million in order to normalize the raw counts by the total number of reads in the sample, making it easier to perform and draw conclusions from gene expression analysis later on. This is another reason why CPM was chosen over TPM, as in addition to ease of interpretation and computing, there is no need to worry about gene length differences in this case.
+
+However, normalizing the subtypes separately can be interpreted as a potential limitation to this project, especially when attempting to draw conclusion from statistically significantly highly variable features and genes between subtypes.
+
+
+```{r normalization, echo = TRUE, message = TRUE, warning = FALSE, results='hide', eval = FALSE}
+
+#Raw Count normalization (CPM) = (count on features)/(library size)*1,000,000
+
+#perform normalization of previously selected subtype
+data <- NormalizeData(data, normalization.method = "RC", scale.factor = 1e6)
+#head(data[["RNA"]]$counts, 20)
+
+```
+
+# Step 5: Visualization:
+
+Trends and relationships between the number of unique genes expressed per cell and the total number of RNA molecules per cell per patient can be visualized using violin plots and scatter plots.
+
+
+```{r violin and scatterplots, echo = TRUE, message = TRUE, warning = FALSE, results='hide', eval = FALSE}
+
+#Violin plots: set features to be analyzed
+markers <- c("nFeature_RNA", "nCount_RNA")
+
+data_VlnPlot <- VlnPlot(data, features = markers, pt.size = 0, ncol = 2, combine = FALSE)
+names(data_VlnPlot) <- markers
+#nFeature_RNA count
+data_VlnPlot$nFeature_RNA & ggtitle(glue("{subtype} nFeature_RNA Raw Counts")) 
+#nCount_RNA counts
+data_VlnPlot$nCount_RNA & ggtitle(glue("{subtype} nCount_RNA Raw Counts")) 
+
+#Scatter plots:
+FeatureScatter(data, feature1 = "nFeature_RNA", feature2 = "nCount_RNA")
+
+```
+
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/HER2_VlnPlots.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/HER2_FeatureScatter.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/ER_VlnPlots.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/ER_FeatureScatter.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/TNBC_VlnPlots.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/TNBC_FeatureScatter.png)
+Overall, the number of RNA molecules per cell per patient (nCount_RNA) was consistent across both samples and subtypes, averaging ~200-500 counts. On the other hand, the number of unique genes expressed per cell (nFeature_RNA) was significantly more variable across samples and subtypes.
+
+Further analysis is continued in part 2 of report "project_analysis_report_p2.html"
+
+# Step 6: Highly Variable Feature Selection:
+
+Finding and displaying the most highly variable features in each subtype elucidates high cell-to-cell variation, and directly models the mean-variance relationship. The top 10 highly variable features are labelled.
+
+
+```{r highly variable feature selection, echo = TRUE, message = TRUE, warning = FALSE, results='hide', eval = FALSE}
+
+#set number of highly variable features to be considered/analyzed (n_highvarfeats) and 
+#labeled (n_labels) 
+n_highvarfeats = 2000
+n_labels = 10
+
+#enables overlap of labels on graph
+options(ggrepel.max.overlaps = Inf) 
+
+data <- FindVariableFeatures(data, selection.method = "vst", nfeatures = n_highvarfeats)
+expr_data_high <- head(VariableFeatures(data), n_labels)
+expr_data_plot <- VariableFeaturePlot(data)
+LabelPoints(plot = expr_data_plot, points = expr_data_high, repel = TRUE, xnudge = 0, 
+ynudge = 0)
+
+```
+
+For example, one prevalent biomarker to note is MUCL1, a well studied breast cancer oncoprotein associated with tumor aggressiveness in HER2+ samples and lackthereof in ER+ samples, and has been previously identified as a potential target for its therapeutic properties ([Link](https://www.nature.com/articles/onc2015487)). 
+
+Another example is the presence of the IGHG family in ER+ samples and lackthereof in TNBC samples. These immunoglobulin families have been previously identified to promote chemosresistance in breast cancer, which directly corresponds with the respective lethality rates associated with ER+ and TNBC samples ([Link](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3494628/)).
+
+The identification of biomarkers such as MUCL1 and the IGHG families helps us validate our analysis thus far and double-check its methodology with biological relevance.
+
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/HER2_VariableFeatures.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/ER_Variable_Features.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/TNBC_VariableFeatures.png)
+
+# Step 7: Scaling Data:
+
+The top 2000 highly variable features identified in Step 6 were taken into downstream analysis to scale the data via linear transform in order to regress out unwanted sources of variation including technical noise and batch effects, as well as to prepare the data into a format that is more easily manipulable for performing PCA and clustering.
+
+
+```{r scaling data, message=FALSE, warning=FALSE, include=TRUE, results='hide', eval = FALSE}
+
+#scale data
+data_genes <- rownames(data)
+data <- ScaleData(data, features = data_genes)
+
+```
+
+# Step 8: Linear Dimension Reduction:
+
+After scaling the data I applied linear dimensionality reduction in the form of Principal Component Analysis (PCA) to visualize regulatory correlation patterns in marker expression within their respective subtypes. This stores 5 (by default) different PCAs containing the largest variances (both positive and negative) in gene expression in decreasing order. For example, PCA1 contains the largest source of variation, PCA2 contains the second largest source, etc. Spatial relationships based on PCA features are also displayed in order to identify trends such as patient-specific batch effects and general patters across subtypes.
+
+
+```{r linear dimension reduction (PCA), message=FALSE, warning=FALSE, include=TRUE, results='hide', eval = FALSE}
+
+#Perform PCA dimension reduction
+data <- RunPCA(data, features = VariableFeatures(object = data))
+
+#set the number of PCA plots to be used to visualize gene expression variance
+dim_min = 1
+dim_max = 2
+
+#Visualizes the top sets of genes that are associated with reduction components of PCA
+VizDimLoadings(data, dims = dim_min:dim_max, reduction = "pca")
+
+#Graph of output of PCA where each point is a cell in position based on its reduction component
+DimPlot(data, reduction = "pca")
+
+```
+
+Note specific markers of interest within each subtype, including SPARC and Biglycan (BGN). 
+
+SPARC, a glycoprotein that mediates interactions between cells and their extracellular surroundings has been found to play a potential role in tumor growth and metastasis ([Link](https://pubmed.ncbi.nlm.nih.gov/25355716/)). This is done by enabling tumor cells to interact with other stromal cells and the ECM. SPARC is downregulated in ER+ but upregulated in both HER2+ and TNBC, correlating with subtype lethality data and the analysis done so far and displayed below.
+
+BGN is another extracellular protein that has been identified due to its upregulation being linked to poor prognosis ([Link](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7039163/)). This protein is also found to be upregulated in both HER2+ and TNBC subtypes, and downregulated in ER+; once again corresponding with lethality data linked to these three subtypes and the PCA below.
+
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/HER2_PCA_Loadings.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/HER2_PCA_Plot.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/ER_PCA_Loadings.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/ER_PCA_Plot.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/TNBC_PCA_Loadings.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/TNBC_PCA_Plot.png)
+
+# Step 9: Determine Data Dimensionality
+
+In preparation for performing clustering and non-linear dimensionality reduction, I want to identify the number of dimensions/principal components from my data to include. By plotting an elbow plot for each sample subtype I can directly observe this minimum PC threshold. In order to keep analysis as consistent as possible across subtypes, PC 9 was chosen as the cutoff for each sample subtype in order to ensure a balance of maintaining the most statistically significant markers while still removing any potential technical noise.
+
+
+```{r dimensionality determination, message=FALSE, warning=FALSE, include=TRUE, results='hide', eval = FALSE}
+
+#can use an elbowplot to identify how many components to include
+ElbowPlot(data) #indicates an "elbow" around PC 9
+
+#used to determine dimensions for clustering and UMAP
+elbow_dims = 9 
+
+```
+
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/HER2_ElbowPlot.png)
+
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/ER_ElbowPlot.png)
+
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/TNBC_ElbowPlot.png)
+
+# Step 10: Clustering:
+
+Using the range of dimensions identified using the previous elbow plots, we can perform graph-based clustering using k-nearest neighbor euclidean distance and a Louvain algorithm. Edges are drawn between cells of similar gene/feature expression to group cell types and enable ease of spatial relationship identification. 
+
+Clustering resolution is dependent upon the number of cell per sample, but 0.4-1.2 is generally recommended for ~3k cells. As a result, a clustering resolution of 0.5 is applied to all subtypes. 
+
+
+```{r clustering, message=FALSE, warning=FALSE, include=TRUE, results='hide', eval = FALSE}
+
+#Performs graph-based clustering via K-nearest neighbor (euclidean distance)
+data <- FindNeighbors(data, dims = 1:elbow_dims) #KNN graph
+data <- FindClusters(data, resolution = 0.5) #Louvain algorithm
+
+```
+
+# Step 11: Non-linear Dimensionality Reduction:
+
+Non-linear dimensionality reduction (via UMAP) is now applied to preserve local distances between cell relationships and ensures cells co-localize based on gene expression. This method is less ideal for identifying global relationships, but still elucidates patterns across our three specified BC subtypes.
+
+Having already clustered our data and created a UMAP to visualize these spatial relationships within each subtype, we can identify the top 10 upregulated and downregulated "markers" or genes/features per cluster. These markers are then used to cross-validate their prevalence and role within the tumor microenvironment using the databases [CellMarker 2.0](http://bio-bigdata.hrbmu.edu.cn/CellMarker/) and [The Human Protein Atlas](https://www.proteinatlas.org/).
+  
+From cross-checking the statistical significance of specific markers in each cluster with the databases listed above, we can begin to label each cluster with their respective cell type. This provides us with a holistic picture of the TME for each respective BC subtype and draw trends across population patterns.
+
+
+```{r UMAP, message=FALSE, warning=FALSE, include=TRUE, results='hide', eval = FALSE}
+
+#UMAP creation (unlabeled)
+data <- RunUMAP(data, dims = 1:elbow_dims)
+DimPlot(data, reduction = "umap", label = TRUE)
+
+#compare differentially expressed features and categorize as "markers"
+data_markers <- FindAllMarkers(data, only.pos = FALSE, min.pct = 0.25, logfc.threshold = 0.25)
+
+#identify largest log fold changes for upregulated genes per cluster
+top_markers <- data_markers %>%
+  filter(p_val_adj < 0.05) %>%
+  group_by(cluster) %>%
+  arrange(desc(avg_log2FC)) %>%
+  slice_head(n = 10) %>%
+  ungroup()
+#view(top_markers)
+
+#identify largest log fold changes for upregulated genes per cluster
+bottom_markers <- data_markers %>%
+  filter(p_val_adj < 0.05) %>%
+  group_by(cluster) %>%
+  arrange(avg_log2FC) %>%
+  slice_head(n = 10) %>%
+  ungroup()
+#view(bottom_markers)
+
+```
+
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/HER2_UMAP_Labeled.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/ER_UMAP_Labeled.png)
+![](/Users/joshuagalla/Downloads/Winter 2024/BIOINF545/group project/Screenshot.png)
+
+Within the HER2+ subtype specifically we can observe a comparable population of Naive CD4+ T cells and CD8+ T cells as in the ER+ subtype. Furthermore, we see a growing population of M2 macrophages as the lethality of the cancer subtype increases from ER+ to TNBC, as well as a growing population of canonical NK cells which dominate the TNBC subtype.
+
+In the ER+ subtype UMAP we can see a significantly large population of Cancer-associated Fibroblasts, or CAFs, which have been shown to initiate a paracrine signaling pathway in ER+ BC cells and induces a TME that regulates tumor progression by enhancing proliferation ([Link](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9548006/)). This is further supported by the prevalence of CD24 that acts as a potential biomarker for ER+ BC because of its role in cell migration and proliferation. 
+
+Additionally, there is a substantial population of CD8+ NK cells in both ER+ and TNBC samples, which are known to be more cytolytic and anti-tumoral. These findings are also largely supported in literature as immature NK cells are prevalent in TNBC and linked to its poor overall survival rate ([Link](https://pubmed.ncbi.nlm.nih.gov/36888695/)). Lastly, TNBC consists of the largest M2 macrophage population, which has been highlighted in past studies demonstrating the responsibilities of tumor-associated macrophages (TAMs) that express the M2 phenotype with sufficient immunosuppressive activity, resulting in a pro-tumor role in TNBC ([Link](https://www.nature.com/articles/s41419-023-06383-x)).
+
+These findings illustrate a spectrum of gene expression profiles and immune cell populations, pinpointing differentially expressed markers that may play pivotal roles in the progression of breast cancer. This segment of the study established a foundational framework for subsequent immune system composition analyses, such as gene set enrichment analysis (GSEA), immune system composition analysis, and/or pathway analysis. These analyses would help create a more holistic overview of the TME for each BC subtype by solidifying the significance of each subtype-specific cell cluster and their regulatory pathways involved. 
