@@ -1,0 +1,8 @@
+#Jupyter Notebook
+.ipynb_checkpoints
+
+#scanpy
+cache
+
+#other
+.DS_store

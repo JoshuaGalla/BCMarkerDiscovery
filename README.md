@@ -10,7 +10,23 @@ This project was inspired by the work of [Ido Nofech-Mozes et al.](https://www.n
 
 # **Data:**
 
-This project specifically builds upon the work above by attempting to replicate their results using a [separate dataset](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE176078) of 26 combined HER2+, ER+, and TNBC-specific patient samples.
+This project specifically builds upon the work above by attempting to replicate their results using a [separate dataset](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE176078) of 26 combined HER2+, ER+, and TNBC-specific patient samples. The supplementary file `GSE176078_Wu_etal_2021_BRCA_scRNASeq.tar.gz` can be found at the bottom of the GEO page and is the basis for this analysis.
 
-The raw script for conducting this project's analysis is described in the `analysis/project_analysis.R` file. A subsequent markdown file and formal report that contains this raw code in combination with further annotations, links to literature supporting findings, figures/plots, and continued discussion and future directions can be seen in the files `report/project_analysis_markdown.Rmd` and `report/project_analysis_report.html` respectively. Due to the file size viewing limitations on GitHub, the formal report file `report/project_analysis_report.html` may need to be downloaded in order to be viewed. 
+The dataset should be downloaded and unzipped, and its contents placed into its own directory labeled `data` at the same level as `analysis` and `report`. Within this new directory, the following files should be present:
+1) barcodes.tsv
+2) genes.tsc
+3) matrix.mtx
+4) metadata.csv
+
+# **Workflow:**
+
+An R script for conducting this project's analysis is described in the `analysis/project_analysis.R` file. A subsequent markdown file and formal report that contains this raw code in combination with further annotations, links to literature supporting findings, figures/plots, and continued discussion and future directions can be seen in the files `report/project_analysis_markdown.Rmd` and `report/project_analysis_report.html` respectively. 
+
+Due to the file size viewing limitations on GitHub, the formal report file `report/project_analysis_report.html` may need to be downloaded in order to be viewed. 
+
+A Python alternative to the analysis performed in `analysis/project_analysis.R` is currently being developed, and is viewable in the Jupyter notebook `analysis/project_analysis.ipynb`. In the near future, a .py script will also be implemented to run this analysis and display plots of interest for a specified BC subtype.
+
+
+
+
 
