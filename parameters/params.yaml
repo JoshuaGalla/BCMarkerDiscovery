@@ -1,0 +1,18 @@
+raw_data:
+  raw_gene_data_path: "./data/Wu_etal_2021_BRCA_scRNASeq/count_matrix_genes.tsv"
+  raw_metadata_path: "./data/Wu_etal_2021_BRCA_scRNASeq/metadata.csv"
+  raw_barcodes_path: "./data/Wu_etal_2021_BRCA_scRNASeq/count_matrix_barcodes.tsv"
+  raw_mtx_path: "./data/Wu_etal_2021_BRCA_scRNASeq/count_matrix_sparse.mtx"
+
+updated_data:
+  updated_data_path: "./data/"
+
+qc: #quality control/preprocessing
+  n_feature_min: 200
+  n_feature_max: 2500
+  n_count_min: 500
+  percent_mt_max: 10
+
+features: #feature selection
+  n_highvarfeats: 2000
+  n_labels: 10
