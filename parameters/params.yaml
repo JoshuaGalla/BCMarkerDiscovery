@@ -9,9 +9,10 @@ updated_data:
 
 qc: #quality control/preprocessing
   n_feature_min: 200
-  n_feature_max: 2500
+  n_feature_max: 5000 #2500
   n_count_min: 500
-  percent_mt_max: 10
+  n_count_max: 20000 #25000
+  percent_mt_max: 15 #10
 
 features: #feature selection
   n_highvarfeats: 2000
