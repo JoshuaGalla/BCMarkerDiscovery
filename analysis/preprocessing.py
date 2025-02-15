@@ -22,25 +22,29 @@ def load_gene_data(raw_gene_data_path, raw_barcodes_path, raw_mtx_path, updated_
     shutil.copy(raw_mtx_path, os.path.join(updated_data_path, 'matrix.mtx'))
 
     #load and read in updated data files (genes, matrix, barcodes)
-    #df_genes_updated = pd.read_csv("./data/updated_genes.tsv", sep='\t', header=None)
-    gene_data = sc.read_10x_mtx(updated_data_path, var_names='gene_symbols', cache=False)
+    adata = sc.read_10x_mtx(updated_data_path, var_names='gene_symbols', cache=True)
 
-    return gene_data
+    return adata
 
-def load_metadata(raw_metadata_path, updated_data_path, gene_data):
+def load_metadata(raw_metadata_path, updated_data_path, adata):
     """
     """
 
     #read in metadata
-    df_metadata = pd.read_csv(raw_metadata_path)
+    metadata = pd.read_csv(raw_metadata_path)
 
     #reformat metadata to match scanpy requirements
-    new_headers = ['cell_id'] + list(df_metadata.columns[1:])
-    df_metadata.columns = new_headers
+    new_headers = ['cell_id'] + list(metadata.columns[1:])
+    metadata.columns = new_headers
 
     #save updated metadata
-    df_metadata.to_csv(updated_data_path + 'metadata.csv', index=False)
+    metadata.to_csv(updated_data_path + 'metadata.csv', index=False)
 
-    metadata = gene_data.obs.join(df_metadata.set_index('cell_id'))
+    adata.obs = adata.obs.join(metadata.set_index('cell_id'))
+    metadata = adata.obs
+
+    #calculate % mitochondrial DNA per sample
+    mito_genes = adata.var_names.str.startswith('MT-')
+    metadata['percent_mt'] = adata[:, mito_genes].X.sum(axis=1)/adata.X.sum(axis=1)*100
 
     return metadata
