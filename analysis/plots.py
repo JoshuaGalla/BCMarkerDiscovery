@@ -35,7 +35,7 @@ def plot_qc_metrics(adata):
     r, _ = pearsonr(adata.obs['nCount_RNA'], adata.obs['nFeature_RNA'])
     rsquared = r**2
     with rc_context({"figure.figsize": (8, 6)}):
-        ax = sc.pl.scatter(adata, x='nCount_RNA', y='nFeature_RNA', color = 'subtype', title = f'RNA Count by Gene Count for each Subtype', show = False)
+        ax = sc.pl.scatter(adata, x='nCount_RNA', y='nFeature_RNA', color = 'subtype', title = f'RNA Count by Gene Count per Subtype', show = False)
         ax.set_xlabel('Total RNA Count')
         ax.set_ylabel('Total Gene Count')
         ax.text(0.50, 0.90, f'R^2 = {rsquared:.3f}', transform = ax.transAxes)
@@ -45,11 +45,40 @@ def plot_qc_metrics(adata):
     r, _ = pearsonr(adata.obs['nCount_RNA'], adata.obs['percent_mt'])
     rsquared = r**2
     with rc_context({"figure.figsize": (8, 6)}):
-        ax = sc.pl.scatter(adata, x='nCount_RNA', y='percent_mt', color = 'subtype', title = f'RNA Count by percent_mt for each Subtype', show = False)
+        ax = sc.pl.scatter(adata, x='nCount_RNA', y='percent_mt', color = 'subtype', title = f'RNA Count by MT DNA per Subtype', show = False)
         ax.set_xlabel('Total RNA Count')
         ax.set_ylabel('Total percent MT DNA (%)')
         ax.text(0.50, 0.90, f'R^2 = {rsquared:.3f}', transform = ax.transAxes)
     plt.show()
+
+def plot_highvarfeats(adata):
+    """
+    """
+
+    #display top 2000 highly variable features
+    with rc_context({"figure.figsize": (8,6)}):
+        sc.pl.highly_variable_genes(adata, show=True)
+
+def plot_pca(adata, n_vars, pc_range):
+    """
+    """
+
+    #display elbow plot to determine dimensionality
+    with rc_context({"figure.figsize": (8,6)}):
+        sc.pl.pca_variance_ratio(adata, show=True)
+
+    #display PCA subplot
+    with rc_context({"figure.figsize": (8,6)}):
+        ax = sc.pl.pca(adata, color='subtype', show=False)
+        ax.set_title('PCA for Highest PCs Across All Subtypes')
+    plt.show()
+
+    #display top n PCs
+    sc.pl.pca_loadings(adata, components=pc_range, n_points=n_vars)
+
+   
+    
+
 
 
 
