@@ -15,5 +15,13 @@ qc: #quality control/preprocessing
   percent_mt_max: 15 #10
 
 features: #feature selection
-  n_highvarfeats: 2000
+  n_highvarfeats: 2000 #number of features chosen for analysis
+  n_feats: 20 #top n features to be displayed
   n_labels: 10
+
+pca:
+  n_vars: 20 #number of genes/features per PC
+  pc_range: [1,2] #range of PCs to be displayed
+
+plots:
+  display_qc_metrics: False
