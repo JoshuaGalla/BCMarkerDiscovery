@@ -7,7 +7,7 @@ raw_data:
 updated_data:
   updated_data_path: "./data/"
 
-qc: #quality control/preprocessing
+QC: #quality control/preprocessing
   n_feature_min: 200
   n_feature_max: 5000 #2500
   n_count_min: 500
@@ -15,13 +15,22 @@ qc: #quality control/preprocessing
   percent_mt_max: 15 #10
 
 features: #feature selection
-  n_highvarfeats: 2000 #number of features chosen for analysis
+  n_HVFs: 2000 #number of features chosen for analysis
   n_feats: 20 #top n features to be displayed
-  n_labels: 10
 
-pca:
+PCA:
   n_vars: 20 #number of genes/features per PC
   pc_range: [1,2] #range of PCs to be displayed
 
+clustering:
+  n_neighbors: 15 #number of neighbors considered for each cell during graph construction
+  n_pcs: 11 #number of PCs chosen for clustering - determined by elbow plot
+  resolution: 0.5 #coarseness of clustering - larger number = more clusters
+
+UMAP:
+  min_dist: 0.5 #distance between embedded points - smaller values cause more clustering
+  spread: 1 #scale of embedded points
+
 plots:
   display_qc_metrics: False
+  display_UMAP_unlabeled: False
