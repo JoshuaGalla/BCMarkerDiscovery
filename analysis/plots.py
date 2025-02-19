@@ -76,6 +76,23 @@ def plot_pca(adata, n_vars, pc_range):
     #display top n PCs
     sc.pl.pca_loadings(adata, components=pc_range, n_points=n_vars)
 
+def plot_umap(adata, n_pcs, display_UMAP_unlabeled):
+    """
+    """
+
+    #display UMAP of embedded clusters for n PCs (labeled by subtype)
+    with rc_context({"figure.figsize": (8,6)}):
+        ax=sc.pl.umap(adata, color=['subtype'], show=False)
+        ax.set_title(f'UMAP of {n_pcs} PC Clusters Labeled by Subtype')
+    plt.show()
+
+    if display_UMAP_unlabeled == True:
+        #display UMAP of embedded clusters for n PCs (not labeled)
+        with rc_context({"figure.figsize": (8,6)}):
+            ax=sc.pl.umap(adata, color='leiden', show=False)
+            ax.set_title(f'UMAP of {n_pcs} PC Clusters Unlabeled')
+        plt.show()
+
    
     
 
