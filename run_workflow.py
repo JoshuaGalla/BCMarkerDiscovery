@@ -1,6 +1,6 @@
 import yaml
-from analysis.preprocessing import load_gene_data, load_metadata
-from analysis.processing import run_qc_norm, select_feats, run_pca
+from analysis.preprocessing import load_gene_data, load_metadata, run_qc_norm, select_feats
+from analysis.processing import run_pca, cluster_data, find_DEFs
 from analysis.plots import plot_qc_metrics
 
 def main():
@@ -32,27 +32,41 @@ def main():
         plot_qc_metrics(adata)
 
     #load in qc params
-    n_feature_min = params['qc']['n_feature_min']
-    n_feature_max = params['qc']['n_feature_max']
-    n_count_min = params['qc']['n_count_min']
-    n_count_max = params['qc']['n_count_max']
-    percent_mt_max = params['qc']['percent_mt_max']
+    n_feature_min = params['QC']['n_feature_min']
+    n_feature_max = params['QC']['n_feature_max']
+    n_count_min = params['QC']['n_count_min']
+    n_count_max = params['QC']['n_count_max']
+    percent_mt_max = params['QC']['percent_mt_max']
 
     #perform qc and normalization
     print("Filtering samples per QC metrics...")
     adata, metadata = run_qc_norm(adata, metadata, n_feature_min, n_feature_max, n_count_min, n_count_max, percent_mt_max)
 
     #identify (and display) highly variable features
-    n_highvarfeats = params['features']['n_highvarfeats']
+    n_HVFs = params['features']['n_HVFs']
     n_feats = params['features']['n_feats']
     print("Identifying highly variable features...")
-    adata = select_feats(adata, n_highvarfeats, n_feats)
+    adata = select_feats(adata, n_HVFs, n_feats)
 
     #run PCA
-    n_vars = params['pca']['n_vars']
-    pc_range = params['pca']['pc_range']
+    n_vars = params['PCA']['n_vars']
+    pc_range = params['PCA']['pc_range']
     print("Performing linear dimensionality reduction (PCA)...")
     adata = run_pca(adata, n_vars, pc_range)
+
+    #cluster highly variable features
+    n_neighbors = params['clustering']['n_neighbors']
+    n_pcs = params['clustering']['n_pcs']
+    resolution = params['clustering']['resolution']
+    min_dist = params['UMAP']['min_dist']
+    spread = params['UMAP']['spread']
+    display_UMAP_unlabeled = params['display']['display_UMAP_unlabeled']
+    print('Clustering data and creating UMAP...')
+    adata = cluster_data(adata, n_neighbors, n_pcs, resolution, min_dist, spread, display_UMAP_unlabeled)
+
+    #find differentially expressed features
+    print("Finding differentially expressed features...")
+    adata = find_DEFs(adata)
 
 if __name__ == '__main__':
     main() 
