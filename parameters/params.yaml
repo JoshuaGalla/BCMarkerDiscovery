@@ -31,6 +31,9 @@ UMAP:
   min_dist: 0.5 #distance between embedded points - smaller values cause more clustering
   spread: 1 #scale of embedded points
 
+DEF:
+  n_genes: 10 #number of differnetially expressed markers per PC
+
 plots:
   display_qc_metrics: False
-  display_UMAP_unlabeled: False
+  display_UMAP_unlabeled: True
