@@ -60,13 +60,14 @@ def main():
     resolution = params['clustering']['resolution']
     min_dist = params['UMAP']['min_dist']
     spread = params['UMAP']['spread']
-    display_UMAP_unlabeled = params['display']['display_UMAP_unlabeled']
+    display_UMAP_unlabeled = params['plots']['display_UMAP_unlabeled']
     print('Clustering data and creating UMAP...')
     adata = cluster_data(adata, n_neighbors, n_pcs, resolution, min_dist, spread, display_UMAP_unlabeled)
 
     #find differentially expressed features
+    n_genes = params['DEF']['n_genes']
     print("Finding differentially expressed features...")
-    adata = find_DEFs(adata)
+    adata = find_DEFs(adata, n_genes)
 
 if __name__ == '__main__':
     main() 
