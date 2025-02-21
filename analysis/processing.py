@@ -44,20 +44,6 @@ def find_DEFs(adata, n_genes):
 
     #plot specific marker of interest on UMAP
     sc.pl.umap(adata, color='VWF', use_raw=False)
-    sc.pl.umap(adata, color='GPR171', use_raw=False)
-    sc.pl.umap(adata, color='GZMB', use_raw=False)
-    sc.pl.umap(adata, color='MS4A1', use_raw=False)
-    sc.pl.umap(adata, color='CRYAB', use_raw=False)
-    sc.pl.umap(adata, color='SCGB1B2P', use_raw=False)
-    sc.pl.umap(adata, color='IGKV1-5', use_raw=False)
-    sc.pl.umap(adata, color='NDUFA4L2', use_raw=False)
-    sc.pl.umap(adata, color='KRT14', use_raw=False)
-    sc.pl.umap(adata, color='CD24', use_raw=False)
-    sc.pl.umap(adata, color='S100A8', use_raw=False)
-    sc.pl.umap(adata, color='ANKRD30A', use_raw=False)
-    sc.pl.umap(adata, color='AGR3', use_raw=False)
-    sc.pl.umap(adata, color='HMOX1', use_raw=False)
-    sc.pl.umap(adata, color='IGHG1', use_raw=False)
-    sc.pl.umap(adata, color='FTL', use_raw=False)
+    #INPUT MARKER SEARCH FUNCTION HERE
 
     return adata
