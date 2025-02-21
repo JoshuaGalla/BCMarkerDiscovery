@@ -1,5 +1,6 @@
 import scanpy as sc
 from analysis.plots import plot_pca, plot_umap
+import numpy as np
 
 def run_pca(adata, n_vars, pc_range):
     """
@@ -31,9 +32,32 @@ def cluster_data(adata, n_neighbors, n_pcs, resolution, min_dist, spread, displa
 
     return adata
 
-def find_DEFs(adata):
+def find_DEFs(adata, n_genes):
     """
     """
 
+    #find differentially expressed markers between PCs
+    sc.tl.rank_genes_groups(adata, groupby='leiden', method='wilcoxon')
+
+    #plot differentially expressed markers
+    sc.pl.rank_genes_groups(adata, n_genes=n_genes, sharey=False)
+
+    #plot specific marker of interest on UMAP
+    sc.pl.umap(adata, color='VWF', use_raw=False)
+    sc.pl.umap(adata, color='GPR171', use_raw=False)
+    sc.pl.umap(adata, color='GZMB', use_raw=False)
+    sc.pl.umap(adata, color='MS4A1', use_raw=False)
+    sc.pl.umap(adata, color='CRYAB', use_raw=False)
+    sc.pl.umap(adata, color='SCGB1B2P', use_raw=False)
+    sc.pl.umap(adata, color='IGKV1-5', use_raw=False)
+    sc.pl.umap(adata, color='NDUFA4L2', use_raw=False)
+    sc.pl.umap(adata, color='KRT14', use_raw=False)
+    sc.pl.umap(adata, color='CD24', use_raw=False)
+    sc.pl.umap(adata, color='S100A8', use_raw=False)
+    sc.pl.umap(adata, color='ANKRD30A', use_raw=False)
+    sc.pl.umap(adata, color='AGR3', use_raw=False)
+    sc.pl.umap(adata, color='HMOX1', use_raw=False)
+    sc.pl.umap(adata, color='IGHG1', use_raw=False)
+    sc.pl.umap(adata, color='FTL', use_raw=False)
 
     return adata
