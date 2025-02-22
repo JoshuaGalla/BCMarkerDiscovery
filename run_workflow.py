@@ -1,7 +1,9 @@
 import yaml
 from analysis.preprocessing import load_gene_data, load_metadata, run_qc_norm, select_feats
 from analysis.processing import run_pca, cluster_data, find_DEFs
+from analysis.postprocessing import umap_labels
 from analysis.plots import plot_qc_metrics
+
 
 def main():
     """
@@ -67,7 +69,10 @@ def main():
     #find differentially expressed features
     n_genes = params['DEF']['n_genes']
     print("Finding differentially expressed features...")
-    adata = find_DEFs(adata, n_genes)
+    adata, all_DEFs = find_DEFs(adata, n_genes)
+
+    #plot marker-specific umaps and label umap with cell types
+    umap_labels(adata, all_DEFs)
 
 if __name__ == '__main__':
     main() 
