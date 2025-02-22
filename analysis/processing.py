@@ -1,6 +1,7 @@
 import scanpy as sc
 from analysis.plots import plot_pca, plot_umap
-import numpy as np
+import pandas as pd
+import warnings
 
 def run_pca(adata, n_vars, pc_range):
     """
@@ -37,13 +38,30 @@ def find_DEFs(adata, n_genes):
     """
 
     #find differentially expressed markers between PCs
-    sc.tl.rank_genes_groups(adata, groupby='leiden', method='wilcoxon')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        sc.tl.rank_genes_groups(adata, groupby='leiden', method='wilcoxon')
+
+    #extract DEFs from rank_genes_groups
+    DEF_result = adata.uns['rank_genes_groups']
+    DEF_groups = DEF_result['names'].dtype.names
+    all_DEFs = set()
+
+    #get PC/group-specific markers and metrics
+    for group in DEF_groups:
+        group_DEFs = DEF_result['names'][group]
+        group_scores = DEF_result['scores'][group]
+        group_pvals = DEF_result['pvals'][group]
+        all_DEFs.update(DEF_result['names'][group])
+
+        #append and sort via pandas df
+        DEF_df = pd.DataFrame({'Marker': group_DEFs, 'Score':group_scores, 'p-value': group_pvals})
+        DEF_df_sorted = DEF_df.sort_values(by='Score', ascending=False)
+
+        print(f'Top differentially expressed markers for PC {group}:') 
+        print(DEF_df_sorted.head(n_genes))       
 
     #plot differentially expressed markers
     sc.pl.rank_genes_groups(adata, n_genes=n_genes, sharey=False)
 
-    #plot specific marker of interest on UMAP
-    sc.pl.umap(adata, color='VWF', use_raw=False)
-    #INPUT MARKER SEARCH FUNCTION HERE
-
-    return adata
+    return adata, all_DEFs

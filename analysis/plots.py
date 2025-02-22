@@ -93,6 +93,13 @@ def plot_umap(adata, n_pcs, display_UMAP_unlabeled):
             ax.set_title(f'UMAP of {n_pcs} PC Clusters Unlabeled')
         plt.show()
 
+def plot_cell_labels(adata):
+    """
+    """
+
+    with rc_context({"figure.figsize": (8,6)}):
+        sc.pl.umap(adata, color='cell_type', title = 'UMAP of Labeled PC Clusters', legend_loc = 'on data', legend_fontsize=6, legend_fontoutline=2)
+
    
     
 
