@@ -36,4 +36,4 @@ DEF:
 
 plots:
   display_qc_metrics: False
-  display_UMAP_unlabeled: True
+  display_UMAP_unlabeled: False
