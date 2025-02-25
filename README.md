@@ -40,7 +40,7 @@ Below is a visual example of what the directory structure should look like:
 
 # **Running the Workflow:**
 
-To run the model, navigate to this directory and enter the following:
+To run the workflow, navigate to this directory and enter the following:
 
 `python run_workflow.py`
 
