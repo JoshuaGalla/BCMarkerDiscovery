@@ -1,6 +1,9 @@
 #Jupyter Notebook
 .ipynb_checkpoints
 
+#R Notebook
+.Rhistory
+
 #scanpy
 cache
 

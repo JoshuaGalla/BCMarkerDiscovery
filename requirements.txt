@@ -1,0 +1,12 @@
+#Reference for Python version (not pip installed)
+python>=3.11.9
+
+#Reference for other dependencies (can be pip isntalled)
+numpy==1.26.4
+pandas==2.2.1
+scikit-learn==1.4.2
+scipy==1.13.0
+scanpy==1.10.2
+matplotlib==3.8.4
+pyYAML==6.0.1
+pytest-warnings==7.4.0
