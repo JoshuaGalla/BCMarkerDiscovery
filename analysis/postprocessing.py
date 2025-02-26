@@ -3,6 +3,14 @@ from analysis.plots import plot_cell_labels
 
 def umap_labels(adata, all_DEFs):
     """
+    labels UMAP clusters with cell type, depending on presence of canonical markers. Enable marker-specific search and UMAP display
+
+    Args:
+        adata (AnnData object): scanpy data object in dataframe format containing gene expression data per cell and metadata
+        all_DEFs (set): set of all differnetially expressed features that exist across top PCs; enables search function
+
+    Returns:
+        adata (AnnData object): updated scanpy object in dataframe format
     """
 
     #search and plot specific marker of interest on UMAP
@@ -21,23 +29,23 @@ def umap_labels(adata, all_DEFs):
 
     #assign cluster labels of specific cell types from DEF analysis
     cell_labels = {
-        '0': 'Adipocytes',
-        '1': 'T Cells',
-        '2': 'B Cells',
-        '3': 'Dendritic Cells',
-        '4': 'Cardiomyocytes',
-        '5': 'Fibroblasts',
-        '6': 'Oligodendrocytes',
-        '7': 'NK Cells',
-        '8': 'Smooth Muscle Cells',
-        '9': 'Basal Keratinocytes',
-        '10': 'Epithelial Cells',
-        '11': 'Suprabasal Keratinocytes',
-        '12': 'Grandular Cells',
-        '13': 'Enterocytes',
-        '14': 'Kupffer Cells',
-        '15': 'Plasma Cells',
-        '16': 'Hofbauer Cells'
+        '0': 'Adipocytes', #VWF
+        '1': 'T Cells', #GPR171
+        '2': 'B Cells', #MS4A1
+        '3': 'Dendritic Cells', #GZMB
+        '4': 'Cardiomyocytes', #CRYAB
+        '5': 'Fibroblasts', #CTSK
+        '6': 'Oligodendrocytes', #SCGB2B2
+        '7': 'NK Cells', #IGKV1-5
+        '8': 'Smooth Muscle Cells', #NDUFA4L2
+        '9': 'Basal Keratinocytes', #KRT14
+        '10': 'Epithelial Cells', #CD24
+        '11': 'Suprabasal Keratinocytes', #S100A8
+        '12': 'Grandular Cells', #ANKRD30A
+        '13': 'Enterocytes', #AGR3
+        '14': 'Kupffer Cells', #HMOX1
+        '15': 'Plasma Cells', #IGHG1
+        '16': 'Hofbauer Cells' #FTL
     }
 
     #replace metadata cell type labels with above labels
@@ -47,22 +55,3 @@ def umap_labels(adata, all_DEFs):
     plot_cell_labels(adata)
 
     return adata
-
-#cluster cell labels
-#0: VWF - ADIPOCYTES OR ENDOTHELIAL CELLS
-#1: GPR171 - T CELLS
-#2: MS4A1 - B cells
-#3: GZMB - DENDRITIC OR NK CELLS
-#4: CRYAB -  CARDIOMYOCYTES OR PROXIMAL TUBULAR CELLS OR SKELETAL MYOCYTES
-#5: CTSK - fibroblasts
-#6: SCGB2B2/DKK1 - OLIGODENDROCYTES OR ENDOMETRIAL STROMAL CELLS
-#7: IGKV1-5 - PLASMA CELLS
-#8: NDUFA4L2 - SMOOTH MUSCLE CELLS OR KERATINOCYTES 
-#9: KRT14 - BASAL KERATINOCYTES
-#10: CD24 - EPITHELIAL CELLS
-#11: S100A8 - SUPRABASAL KERATINOCYTES
-#12: ANKRD30A - BREAST GLANDULAR CELLS
-#13: AGR3 - PROXIMAL ENTEROCYTES
-#14: HMOX1 - KUPFFER CELLS OR TROPHOBLASTS
-#15: IGHG1 - PLASMA CELLS
-#16: FTL - HOFBAUER CELLS

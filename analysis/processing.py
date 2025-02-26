@@ -5,6 +5,15 @@ import warnings
 
 def run_pca(adata, n_vars, pc_range):
     """
+    Performs linear dimensionality reduction via PCA
+
+    Args:
+        adata (AnnData object): scanpy data object in dataframe format containing gene expression data per cell and metadata
+        n_vars (int): number of genes/feature to be included per PC
+        pc_range (list): number/range of PCs with variable features to be displayed
+
+    Returns:
+        adata (AnnData object): updated scanpy object in dataframe format
     """
 
     #applying PCA
@@ -17,6 +26,19 @@ def run_pca(adata, n_vars, pc_range):
 
 def cluster_data(adata, n_neighbors, n_pcs, resolution, min_dist, spread, display_UMAP_unlabeled):
     """
+    Performs cell clustering via KNN (leiden algorithm) and embeds neighborhood graph via UMAP
+
+    Args:
+        adata (AnnData object): scanpy data object in dataframe format containing gene expression data per cell and metadata
+        n_neighbors (int): number of neighbors considered for each cell during graph construction
+        n_pcs (int): number of PCs considered for clustering; determined visually by looking at elbow plot
+        resolution (float): coarseness of clustering
+        min_dist (float): distance between embedded points
+        spread (int): scale of embedded points
+        display_UMAP_unlabeled (boolean): indicates whether unlababeled raw UMAP is displayed for user to view
+
+    Returns:
+        adata (AnnData object): updated scanpy object in dataframe format
     """
 
     #compute nearest neighbor distances and matrix using Gaussian kernel for KNN
@@ -35,6 +57,15 @@ def cluster_data(adata, n_neighbors, n_pcs, resolution, min_dist, spread, displa
 
 def find_DEFs(adata, n_genes):
     """
+    Identifies differentially epressed features that define each PC to enable precise UMAP labeling
+
+    Args:
+        adata (AnnData object): scanpy data object in dataframe format
+        n_genes (int): number of differnetially expressed markers per PC
+
+    Returns:
+        adata (AnnData object): updated scanpy object in dataframe format
+        all_DEFs (set): set of all differnetially expressed features that exist across top PCs; enables search function
     """
 
     #find differentially expressed markers between PCs
