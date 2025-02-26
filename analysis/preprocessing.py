@@ -7,6 +7,16 @@ from analysis.plots import plot_highvarfeats
 
 def load_gene_data(raw_gene_data_path, raw_barcodes_path, raw_mtx_path, updated_data_path):
     """
+    Loads in provided raw dataset to update sparse matrix, barcodes, and genes files into scanpy format
+
+    Args:
+        raw_gene_data_path (str): path of raw count_matrix_genes.tsv file
+        raw_barcodes_path (str): path of raw count_matrix_barcodes.tsv file
+        raw_mtx_path (str) : path of raw count_matrix_sparse.mtx file
+        updated_data_path (str): path for updated genes, barcodes, and matrix files to be saved to
+
+    Returns:
+        adata (AnnData object): scanpy object in dataframe format containing gene expression values for each cell/sample
     """
 
     #read in gene data
@@ -30,6 +40,15 @@ def load_gene_data(raw_gene_data_path, raw_barcodes_path, raw_mtx_path, updated_
 
 def load_metadata(raw_metadata_path, updated_data_path, adata):
     """
+    Loads in updated dataset to extract and append respective metadata
+
+    Args:
+        raw_metadata_path (str): path of raw metadata.csv file
+        updated_data_path (str): path for updated genes, barcodes, and matrix files to be saved to
+        adata (AnnData object): scanpy data object in dataframe format containing gene expression data per cell and metadata
+
+    Returns:
+        metadata (AnnData object): scanpy object in dataframe format containing only relevant metadata for each cell/sample
     """
 
     #read in metadata
@@ -53,6 +72,20 @@ def load_metadata(raw_metadata_path, updated_data_path, adata):
 
 def run_qc_norm(adata, metadata, n_feature_min, n_feature_max, n_count_min, n_count_max, percent_mt_max):
     """
+    Loads in updated dataset and metadata to perform filtering and normalization
+
+    Args:
+        adata (AnnData object): scanpy data object in dataframe format containing gene expression data per cell and metadata
+        metadata (AnnData object): scanpy object in dataframe format containing only relevant metadata for each cell/sample
+        n_feature_min (int): min threshold for feature/gene count of cell
+        n_feature_max (int): max threshold for feature/gene count of cell
+        n_count_min (int): min threshold for RNA count of cell
+        n_count_max (int): max threshold for RNA count of cell
+        percent_mt_max (int): max threshold for percent mitochondrial DNA to be present in the cell
+
+    Returns:
+        adata (AnnData object): scanpy data object in dataframe format containing filtered gene expression data per cell and metadata
+        metadata (AnnData object): scanpy object in dataframe format containing only relevant filtered metadata for each cell/sample
     """
 
     #calculating total dataset size
@@ -87,6 +120,15 @@ def run_qc_norm(adata, metadata, n_feature_min, n_feature_max, n_count_min, n_co
 
 def select_feats(adata, n_HVFs, n_feats):
     """
+    Loads in filtered and normalized data and perform highly variable feature extraction
+
+    Args:
+        adata (AnnData object): scanpy data object in dataframe format containing gene expression data per cell and metadata
+        n_HVFs (int): number of features/genes to be included for analysis
+        n_feats (int): number of most differnetially expressed features to be displayed/plotted
+
+    Returns:
+        adata (AnnData object): updated scanpy object in dataframe format containing only HVGs (default 2000)
     """
 
     #log transform of data to prep for PCA

@@ -5,6 +5,13 @@ from scipy.stats import pearsonr
 
 def plot_qc_metrics(adata):
     """
+    Displays QC info required for informed preprocessing, including gene, RNA, and percent mitochondrial DNA counts per subtype
+
+    Args:
+        adata (AnnData object): scanpy data object in dataframe format containing subtype label, gene/RNA/MT% counts, and other metadata
+
+    Returns:
+        None - plots QC metric graphs per subtype
     """
 
     #gene count distribution
@@ -53,6 +60,13 @@ def plot_qc_metrics(adata):
 
 def plot_highvarfeats(adata):
     """
+    Displays normalized and non-normalized top 2000 most highly variable features across all three subtypes
+
+    Args:
+        adata (AnnData object): scanpy data object in dataframe format containing gene expression values for each cell/sample across subtypes
+
+    Returns:
+        None - plots most highly variable features across all subtypes
     """
 
     #display top 2000 highly variable features
@@ -61,6 +75,15 @@ def plot_highvarfeats(adata):
 
 def plot_pca(adata, n_vars, pc_range):
     """
+    Displays data dimensionality info required for UMAP, including PC elbow plot, PCA clustered by subtype, and top PCs contributing to variance
+
+    Args:
+        adata (AnnData object): scanpy data object in dataframe format containing gene expression values per cell, PC identification, and other relevant metadata
+        n_vars (int): number of genes/feature to be included per PC
+        pc_range (list): number/range of PCs with variable features to be displayed
+
+    Returns:
+        None - plots elbow plot, PCA subplot, and differential features per displayed PC
     """
 
     #display elbow plot to determine dimensionality
@@ -78,6 +101,15 @@ def plot_pca(adata, n_vars, pc_range):
 
 def plot_umap(adata, n_pcs, display_UMAP_unlabeled):
     """
+    Displays single-cell, subtype-specific, and overall UMAP of top 2000 HVGs
+
+    Args:
+        adata (AnnData object): scanpy data object in dataframe format
+        n_pcs (int): number of PCs considered for clustering; determined visually by looking at elbow plot
+        display_UMAP_unlabeled (boolean): indicates whether unlababeled raw UMAP is displayed for user to view
+
+    Returns:
+        None - plots subtype-specific and unlabeled UMAPs
     """
 
     #display UMAP of embedded clusters for n PCs (labeled by subtype)
@@ -95,6 +127,13 @@ def plot_umap(adata, n_pcs, display_UMAP_unlabeled):
 
 def plot_cell_labels(adata):
     """
+    Displays UMAP with previously identiifed clusters labeled with cell type based on canonical marker expression
+    
+    Args:
+        adata (AnnData object): scanpy data object in dataframe format
+        
+    Returns:
+        None - plots UMAP containing clusters labeled by significant cell type markers
     """
 
     with rc_context({"figure.figsize": (8,6)}):
