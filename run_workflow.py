@@ -4,9 +4,15 @@ from analysis.processing import run_pca, cluster_data, find_DEFs
 from analysis.postprocessing import umap_labels
 from analysis.plots import plot_qc_metrics
 
-
 def main():
     """
+    Runs scanpy scRNA-seq workflow to perform preprocessing, processing, and postprocessing of inputted dataset 
+
+    Args:
+        None
+
+    Returns:
+        None - displays analysis progress, metrics and highly variable markers, and relevant plots
     """
 
     #read in parameters
