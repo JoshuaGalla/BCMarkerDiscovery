@@ -78,7 +78,7 @@ def main():
     adata, all_DEFs = find_DEFs(adata, n_genes)
 
     #plot marker-specific umaps and label umap with cell types
-    umap_labels(adata, all_DEFs)
+    adata = umap_labels(adata, all_DEFs)
 
 if __name__ == '__main__':
     main() 
