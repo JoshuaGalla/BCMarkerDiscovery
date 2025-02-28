@@ -41,7 +41,7 @@ def umap_labels(adata, all_DEFs):
         '9': 'Basal Keratinocytes', #KRT14
         '10': 'Epithelial Cells', #CD24
         '11': 'Suprabasal Keratinocytes', #S100A8
-        '12': 'Grandular Cells', #ANKRD30A
+        '12': 'Glandular Cells', #ANKRD30A
         '13': 'Enterocytes', #AGR3
         '14': 'Kupffer Cells', #HMOX1
         '15': 'Plasma Cells', #IGHG1
