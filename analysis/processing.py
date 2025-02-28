@@ -57,7 +57,7 @@ def cluster_data(adata, n_neighbors, n_pcs, resolution, min_dist, spread, displa
 
 def find_DEFs(adata, n_genes):
     """
-    Identifies differentially epressed features that define each PC to enable precise UMAP labeling
+    Identifies differentially expressed features that define each PC to enable precise UMAP labeling
 
     Args:
         adata (AnnData object): scanpy data object in dataframe format
